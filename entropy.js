@@ -12,7 +12,7 @@ entropy.use(connect.methodOverride());
 try {
     configJSON = fs.readFileSync(__dirname+"/config.json");
 } catch(e) {
-    sys.log("File config.json not found. Try: `cp config.json.sample config.json`");
+    sys.log("File config.json not found. Try: 'cp config.json.sample config.json'");
 }
 var config = JSON.parse(configJSON.toString());
 
