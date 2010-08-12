@@ -1,0 +1,15 @@
+{
+    "debug": false,
+    "logger": false,
+
+    "mongo": {
+        "host": "localhost",
+        "port": 27017,
+        "name": "entropy"
+    },
+
+    "server": {
+        "addr": "localhost",
+        "port": 3000
+    }
+}
