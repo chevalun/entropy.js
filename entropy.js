@@ -133,7 +133,7 @@ app.del('/:collection/:id', function(req, res, next) {
       next(new NotFound);
     } else {
       doc.remove(function() {
-        res.send(doc.toObject(), 200);
+        res.send('200 OK', 200);
       });
     }
   });
