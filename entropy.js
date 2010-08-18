@@ -1,58 +1,146 @@
+﻿
 var fs  = require("fs"),
-    sys = require("sys");
+    sys = require("sys"),
+    express = require("express"),
+    extname = require('path').extname;
 
-var express = require("express"),
-    connect = require("connect");
+var app = module.exports.app = express.createServer();
 
-var entropy = express.createServer();
-
-entropy.use(connect.conditionalGet());
-entropy.use(connect.methodOverride());
+app.use(express.conditionalGet());
+app.use(express.methodOverride());
 
 try {
-    configJSON = fs.readFileSync(__dirname+"/config.json");
+  cfg = module.exports.cfg = JSON.parse(fs.readFileSync(__dirname+"/config.json").toString());
 } catch(e) {
-    sys.log("File config.json not found. Try: 'cp config.json.sample config.json'");
-}
-var config = JSON.parse(configJSON.toString());
-
-if (config.debug) {
-    entropy.use(connect.errorHandler({
-        showStack: true,
-        dumpExceptions: true
-    }));
+  sys.log("File cfg.json not found. Try: 'cp config.json.sample config.json'");
 }
 
-if (config.logger) {
-    entropy.use(connect.logger());
+if (cfg.debug) {
+  app.use(express.errorHandler({
+    showStack: true,
+    dumpExceptions: true
+  }));
+}
+
+if (cfg.logger) {
+  app.use(express.logger());
 }
 
 var mongoose = require("mongoose").Mongoose,
-    mongodb  = mongoose.connect("mongodb://"+config.mongo.host+":"+config.mongo.port+"/"+config.mongo.name);
+    mongodb  = module.exports.db = mongoose.connect("mongodb://"+cfg.mongo.host+":"+cfg.mongo.port+"/"+cfg.mongo.name);
+
+require.paths.unshift(__dirname+"/models");
+fs.readdir(__dirname+"/models", function(err, files) {
+  if (err) {
+    throw new Error;
+  }
+
+  files.forEach(function(file) {
+    if (extname(file) == '.js') {
+      require(file.replace('.js', ''));
+    }
+  });
+});
+
+app.set('mongoose', mongoose);
+app.set('mongodb', mongodb);
+
+function NotFound(msg){
+  this.name = 'NotFound';
+  Error.call(this, msg);
+  Error.captureStackTrace(this, arguments.callee);
+}
+
+sys.inherits(NotFound, Error);
+
+app.error(function(err, req, res, next) {
+  if (err instanceof NotFound) {
+    res.send("404", 404);
+  } else {
+    next(err);
+  }
+});
+
+app.error(function(err, req, res) {
+  res.send("500", 500);
+});
+
+// HELLO
+app.get("/", function(req, res, next) {
+  res.send("hello", 200);
+});
 
 // FIND
-entropy.get("/:collection", function(req, res) {
-    res.send("find:"+req.param("collection"), 200);
+app.get("/:collection", function(req, res, next) {
+  var model = app.set('mongodb').model(req.param("collection"));
+
+  model.find().all(function(docs) {
+    var ret = [];
+    docs.forEach(function(doc) {
+      ret.push(doc.toObject());
+    });
+
+    res.header('Content-Type', 'application/json');
+    res.send(ret, 200);
+  });
 });
 
 // READ
-entropy.get("/:collection/:id", function(req, res) {
-    res.send("read:"+req.param("collection")+"/"+req.param("id"), 200);
+app.get("/:collection/:id", function(req, res, next) {
+  var model = app.set('mongodb').model(req.param("collection"));
+
+  model.findById(req.param("id"), function(doc) {
+    if (!doc) {
+      return next(new NotFound);
+    }
+
+    res.header('Content-Type', 'application/json');
+    res.send(doc.toObject(), 200);
+  });
 });
 
 // CREATE
-entropy.post("/:collection", function(req, res) {
-    res.send("create:"+req.param("collection"), 201);
+app.post("/:collection", function(req, res, next) {
+  var model = app.set('mongodb').model(req.param("collection")),
+      doc   = new model;
+
+  doc.merge(req.param(req.param("collection")));
+
+  doc.save(function() {
+    res.send(doc.toObject(), 201);
+  });
 });
 
 // MODIFY
-entropy.post("/:collection/:id", function(req, res) {
-    res.send("modify:"+req.param("collection")+"/"+req.param("id"), 200);
+app.post("/:collection/:id", function(req, res, next) {
+  var model = app.set('mongodb').model(req.param("collection"));
+
+  model.findById(req.param("id"), function(doc) {
+    if (!doc) {
+      return next(new NotFound);
+    }
+
+    doc.merge(req.param(req.param("collection")));
+
+    doc.save(function() {
+      res.send(doc.toObject(), 201);
+    });
+  });
 });
 
 // REMOVE
-entropy.del("/:collection/:id", function(req, res) {
-    res.send("remove:"+req.param("collection")+"/"+req.param("id"), 200);
+app.del("/:collection/:id", function(req, res, next) {
+  var model = app.set('mongodb').model(req.param("collection"));
+
+  model.findById(req.param("id"), function(doc) {
+    if (!doc) {
+      return next(new NotFound);
+    }
+
+    doc.remove(function() {
+      res.send(doc.toObject(), 200);
+    });
+  });
 });
 
-entropy.listen(config.server.port, config.server.addr);
+app.listen(cfg.server.port /* , cfg.server.addr */);
