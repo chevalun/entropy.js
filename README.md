@@ -50,6 +50,7 @@ of an simple user model:
       indexes: ["username", "email"]
     });
 
+
 That's it. You can now find, read, create, modify and remove user objects via
 REST, just by calling the appropriate URLs:
 
@@ -58,7 +59,31 @@ REST, just by calling the appropriate URLs:
     POST localhost:3000/user?user[username]=foo&user[email]=bar // create
     POST localhost:3000/user/1?user[username]=foo&user[email]=bar // modify
     DELETE localhost:3000/user/1 // remove
-    
+
+CUSTOMIZATION
+-------------
+
+If you want to overload the default behavior of the REST controllers, simply
+put your own in the `/controllers` directory. Here's an example for a customized
+user controller which removes users' email address from the response:
+
+    // controllers/user.js
+    var app = modules.parent.exports.app,
+        db = modules.parent.exports.db;
+        
+    app.get('/user', function(req, res) {
+      db.model('user').find().all(function(users) {
+        ret = [];
+        users.forEach(function(user) {
+          user = user.toObject();
+          delete user.email;
+          ret.push(user);
+        });
+
+        res.header('Content-Type', 'application/json');
+        res.send(ret, 200);
+      })
+    });
 
 
 LICENSE

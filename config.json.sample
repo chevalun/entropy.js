@@ -2,6 +2,12 @@
     "debug": false,
     "logger": false,
 
+    "loader": {
+        "controllers": ["./controllers"],
+        "use_default_controller": true,
+        "models": ["./models"]
+    },
+
     "mongo": {
         "host": "localhost",
         "port": 27017,

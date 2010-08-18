@@ -1,57 +1,65 @@
 var fs = require('fs'),
-    sys = require('sys');
+    sys = require('sys'),
+    extname = require('path').extname;
+
+// bootstrap 3rd-party libraries
+require.paths.unshift(__dirname+'/support/');
+require.paths.unshift(__dirname+'/support/mongoose/');
 
 // include 3rd-party libraries
-var express = require(__dirname+'/support/express'),
-    mongoose = require(__dirname+'/support/mongoose/mongoose').Mongoose;
+var express = require('express'),
+    mongoose = require('mongoose').Mongoose;
 
 // create server
-var app = express.createServer();
+var app = module.exports.app = express.createServer();
 
 // configure server
+app.use(express.compiler({ enable: true }));
 app.use(express.conditionalGet());
 app.use(express.methodOverride());
+app.use(express.staticProvider(__dirname+'/public'));
+app.set('views', __dirname+'/views');
 
+// load configuration
 try {
-  var cfg = JSON.parse(fs.readFileSync(__dirname+'/config.json').toString());
+  var cfg = module.exports.cfg = JSON.parse(fs.readFileSync(__dirname+'/config.json').toString());
 } catch(e) {
   throw new Error("File config.json not found. Try: 'cp config.json.sample config.json'");
 }
 
-if (cfg.debug) {
+// file loader (for controllers, models, ...)
+var loader = function(dir) {
+  fs.readdir(dir, function(err, files) {
+    if (err) {
+      throw err;
+    }
+
+    files.forEach(function(file) {
+      if (extname(file) == '.js') {
+        require(dir+'/'+file.replace('.js', ''));
+      }
+    });
+  });
+};
+
+// enable debugger
+if (true == cfg.debug) {
   app.use(express.errorHandler({
     showStack: true,
     dumpExceptions: true
   }));
 }
 
-if (cfg.logger) {
+// enable logger
+if (true == cfg.logger) {
   app.use(express.logger());
 }
 
-// open db connection
-var mongodb = mongoose.connect('mongodb://'+cfg.mongo.host+':'+cfg.mongo.port+'/'+cfg.mongo.name);
-
-// load models
-require.paths.unshift(__dirname+'/models');
-fs.readdir(__dirname+'/models', function(err, files) {
-  if (err) {
-    throw err;
-  }
-
-  var extname = require('path').extname;
-  files.forEach(function(file) {
-    if (extname(file) == '.js') {
-      require(file.replace('.js', ''));
-    }
-  });
-});
-
-function NotFound(msg) {
+var NotFound = module.exports.nf = function(msg) {
   this.name = 'NotFound';
   Error.call(this, msg);
   Error.captureStackTrace(this, arguments.callee);
-}
+};
 
 sys.inherits(NotFound, Error);
 
@@ -69,83 +77,90 @@ app.error(function(err, req, res) {
   res.send('500 Internal server error', 500);
 });
 
-// HELLO
-app.get('/', function(req, res, next) {
-  res.send('200 OK', 200);
-});
+// open db connection
+var db = module.exports.db = mongoose.connect('mongodb://'+cfg.mongo.host+':'+cfg.mongo.port+'/'+cfg.mongo.name);
 
-// FIND
-app.get('/:collection', function(req, res, next) {
-  var col = mongodb.model(req.param('collection'));
+// load models
+cfg.loader.models.forEach(loader);
 
-  col.find().all(function(docs) {
-    var ret = [];
-    docs.forEach(function(doc) {
-      ret.push(doc.toObject());
-    });
+// load controllers
+cfg.loader.controllers.forEach(loader);
 
-    res.header('Content-Type', 'application/json');
-    res.send(ret, 200);
-  });
-});
+// load default controller
+if (cfg.loader.use_default_controller) {
+  // FIND
+  app.get('/:collection', function(req, res, next) {
+    var col = db.model(req.param('collection'));
 
-// READ
-app.get('/:collection/:id', function(req, res, next) {
-  var col = mongodb.model(req.param('collection'));
+    col.find().all(function(docs) {
+      var ret = [];
+      docs.forEach(function(doc) {
+        ret.push(doc.toObject());
+      });
 
-  col.findById(req.param('id'), function(doc) {
-    if (!doc) {
-      next(new NotFound);
-    } else {
       res.header('Content-Type', 'application/json');
-      res.send(doc.toObject(), 200);
-    }
+      res.send(ret, 200);
+    });
   });
-});
 
-// CREATE
-app.post('/:collection', function(req, res, next) {
-  var col = mongodb.model(req.param('collection')),
-      doc = new col;
+  // READ
+  app.get('/:collection/:id', function(req, res, next) {
+    var col = db.model(req.param('collection'));
 
-  doc.merge(req.param(req.param('collection')));
-
-  doc.save(function() {
-    res.send(doc.toObject(), 201);
-  });
-});
-
-// MODIFY
-app.post('/:collection/:id', function(req, res, next) {
-  var col = mongodb.model(req.param('collection'));
-
-  col.findById(req.param('id'), function(doc) {
-    if (!doc) {
-      next(new NotFound);
-    } else {
-      doc.merge(req.param(req.param('collection')));
-
-      doc.save(function() {
+    col.findById(req.param('id'), function(doc) {
+      if (!doc) {
+        next(new NotFound);
+      } else {
+        res.header('Content-Type', 'application/json');
         res.send(doc.toObject(), 200);
-      });
-    }
+      }
+    });
   });
-});
 
-// REMOVE
-app.del('/:collection/:id', function(req, res, next) {
-  var col = mongodb.model(req.param('collection'));
+  // CREATE
+  app.post('/:collection', function(req, res, next) {
+    var col = db.model(req.param('collection')),
+        doc = new col;
 
-  col.findById(req.param('id'), function(doc) {
-    if (!doc) {
-      next(new NotFound);
-    } else {
-      doc.remove(function() {
-        res.send('200 OK', 200);
-      });
-    }
+    doc.merge(req.param(req.param('collection')));
+
+    doc.save(function() {
+      res.send(doc.toObject(), 201);
+    });
   });
-});
+
+  // MODIFY
+  app.post('/:collection/:id', function(req, res, next) {
+    var col = db.model(req.param('collection'));
+
+    col.findById(req.param('id'), function(doc) {
+      if (!doc) {
+        next(new NotFound);
+      } else {
+        doc.merge(req.param(req.param('collection')));
+
+        doc.save(function() {
+          res.send(doc.toObject(), 200);
+        });
+      }
+    });
+  });
+
+  // REMOVE
+  app.del('/:collection/:id', function(req, res, next) {
+    var col = db.model(req.param('collection'));
+
+    col.findById(req.param('id'), function(doc) {
+      if (!doc) {
+        next(new NotFound);
+      } else {
+        doc.remove(function() {
+          res.send('200 OK', 200);
+        });
+      }
+    });
+  });
+}
 
 // start server
 app.listen(cfg.server.port /* , cfg.server.addr */);
