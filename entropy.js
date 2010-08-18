@@ -118,7 +118,7 @@ app.post('/:collection/:id', function(req, res, next) {
       doc.merge(req.param(req.param('collection')));
 
       doc.save(function() {
-        res.send(doc.toObject(), 201);
+        res.send(doc.toObject(), 200);
       });
     }
   });
