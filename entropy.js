@@ -11,7 +11,7 @@ app.use(express.methodOverride());
 try {
   var cfg = JSON.parse(fs.readFileSync(__dirname+'/config.json').toString());
 } catch(e) {
-  throw new Error("File configg.json not found. Try: 'cp config.json.sample config.json'");
+  throw new Error("File config.json not found. Try: 'cp config.json.sample config.json'");
 }
 
 if (cfg.debug) {
