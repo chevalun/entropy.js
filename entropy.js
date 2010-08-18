@@ -1,17 +1,17 @@
-﻿var fs  = require('fs'),
+var fs = require('fs'),
     sys = require('sys'),
     express = require('express'),
     extname = require('path').extname;
 
-var app = module.exports.app = express.createServer();
+var app = express.createServer();
 
 app.use(express.conditionalGet());
 app.use(express.methodOverride());
 
 try {
-  cfg = module.exports.cfg = JSON.parse(fs.readFileSync(__dirname+"/config.json").toString());
+  var cfg = JSON.parse(fs.readFileSync(__dirname+'/config.json').toString());
 } catch(e) {
-  sys.log("File cfg.json not found. Try: 'cp config.json.sample config.json'");
+  throw new Error("File configg.json not found. Try: 'cp config.json.sample config.json'");
 }
 
 if (cfg.debug) {
@@ -26,7 +26,7 @@ if (cfg.logger) {
 }
 
 var mongoose = require('mongoose').Mongoose,
-    mongodb  = module.exports.db = mongoose.connect('mongodb://'+cfg.mongo.host+':'+cfg.mongo.port+'/'+cfg.mongo.name);
+    mongodb = mongoose.connect('mongodb://'+cfg.mongo.host+':'+cfg.mongo.port+'/'+cfg.mongo.name);
 
 require.paths.unshift(__dirname+'/models');
 fs.readdir(__dirname+'/models', function(err, files) {
@@ -40,9 +40,6 @@ fs.readdir(__dirname+'/models', function(err, files) {
     }
   });
 });
-
-app.set('mongoose', mongoose);
-app.set('mongodb', mongodb);
 
 function NotFound(msg){
   this.name = 'NotFound';
@@ -71,7 +68,7 @@ app.get('/', function(req, res, next) {
 
 // FIND
 app.get('/:collection', function(req, res, next) {
-  var col = app.set('mongodb').model(req.param('collection'));
+  var col = mongodb.model(req.param('collection'));
 
   col.find().all(function(docs) {
     var ret = [];
@@ -86,7 +83,7 @@ app.get('/:collection', function(req, res, next) {
 
 // READ
 app.get('/:collection/:id', function(req, res, next) {
-  var col = app.set('mongodb').model(req.param('collection'));
+  var col = mongodb.model(req.param('collection'));
 
   col.findById(req.param('id'), function(doc) {
     if (!doc) {
@@ -100,7 +97,7 @@ app.get('/:collection/:id', function(req, res, next) {
 
 // CREATE
 app.post('/:collection', function(req, res, next) {
-  var col = app.set('mongodb').model(req.param('collection')),
+  var col = mongodb.model(req.param('collection')),
       doc = new col;
 
   doc.merge(req.param(req.param('collection')));
@@ -112,7 +109,7 @@ app.post('/:collection', function(req, res, next) {
 
 // MODIFY
 app.post('/:collection/:id', function(req, res, next) {
-  var col = app.set('mongodb').model(req.param('collection'));
+  var col = mongodb.model(req.param('collection'));
 
   col.findById(req.param('id'), function(doc) {
     if (!doc) {
@@ -129,7 +126,7 @@ app.post('/:collection/:id', function(req, res, next) {
 
 // REMOVE
 app.del('/:collection/:id', function(req, res, next) {
-  var col = app.set('mongodb').model(req.param('collection'));
+  var col = mongodb.model(req.param('collection'));
 
   col.findById(req.param('id'), function(doc) {
     if (!doc) {
