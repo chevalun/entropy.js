@@ -2,15 +2,14 @@ README
 ======
 
 entropy is a simple [RESTful][1] server in front of a [MongoDB][2] instance
-using [node.js][3], [Express][4], [Connect][5] and [Mongoose][6].
+using [node.js][3], [Express][4] and [Mongoose][5].
 
 DEPENDENCIES
 ------------
 
 * [node.js][3]
 * [Express][4]
-* [Connect][5]
-* [Mongoose][6]
+* [Mongoose][5]
 
 INSTALLATION
 ------------
@@ -73,6 +72,4 @@ that was distributed with this source code.
 [2]: http://www.mongodb.org/
 [3]: http://nodejs.org/
 [4]: http://expressjs.com/
-[5]: http://senchalabs.github.com/connect/
-[6]: http://www.learnboost.com/mongoose/
-[7]: http://npmjs.org/
+[5]: http://www.learnboost.com/mongoose/
