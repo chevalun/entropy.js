@@ -71,9 +71,9 @@ app.get('/', function(req, res, next) {
 
 // FIND
 app.get('/:collection', function(req, res, next) {
-  var model = app.set('mongodb').model(req.param('collection'));
+  var col = app.set('mongodb').model(req.param('collection'));
 
-  model.find().all(function(docs) {
+  col.find().all(function(docs) {
     var ret = [];
     docs.forEach(function(doc) {
       ret.push(doc.toObject());
@@ -86,9 +86,9 @@ app.get('/:collection', function(req, res, next) {
 
 // READ
 app.get('/:collection/:id', function(req, res, next) {
-  var model = app.set('mongodb').model(req.param('collection'));
+  var col = app.set('mongodb').model(req.param('collection'));
 
-  model.findById(req.param('id'), function(doc) {
+  col.findById(req.param('id'), function(doc) {
     if (!doc) {
       return next(new NotFound);
     }
@@ -100,8 +100,8 @@ app.get('/:collection/:id', function(req, res, next) {
 
 // CREATE
 app.post('/:collection', function(req, res, next) {
-  var model = app.set('mongodb').model(req.param('collection')),
-      doc   = new model;
+  var col = app.set('mongodb').model(req.param('collection')),
+      doc = new col;
 
   doc.merge(req.param(req.param('collection')));
 
@@ -112,9 +112,9 @@ app.post('/:collection', function(req, res, next) {
 
 // MODIFY
 app.post('/:collection/:id', function(req, res, next) {
-  var model = app.set('mongodb').model(req.param('collection'));
+  var col = app.set('mongodb').model(req.param('collection'));
 
-  model.findById(req.param('id'), function(doc) {
+  col.findById(req.param('id'), function(doc) {
     if (!doc) {
       return next(new NotFound);
     }
@@ -129,9 +129,9 @@ app.post('/:collection/:id', function(req, res, next) {
 
 // REMOVE
 app.del('/:collection/:id', function(req, res, next) {
-  var model = app.set('mongodb').model(req.param('collection'));
+  var col = app.set('mongodb').model(req.param('collection'));
 
-  model.findById(req.param('id'), function(doc) {
+  col.findById(req.param('id'), function(doc) {
     if (!doc) {
       return next(new NotFound);
     }
