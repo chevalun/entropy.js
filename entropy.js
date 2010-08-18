@@ -1,10 +1,14 @@
 var fs = require('fs'),
-    sys = require('sys'),
-    express = require('express'),
-    extname = require('path').extname;
+    sys = require('sys');
 
+// include 3rd-party libraries
+var express = require(__dirname+'/support/express'),
+    mongoose = require(__dirname+'/support/mongoose/mongoose').Mongoose;
+
+// create server
 var app = express.createServer();
 
+// configure server
 app.use(express.conditionalGet());
 app.use(express.methodOverride());
 
@@ -25,15 +29,17 @@ if (cfg.logger) {
   app.use(express.logger());
 }
 
-var mongoose = require('mongoose').Mongoose,
-    mongodb = mongoose.connect('mongodb://'+cfg.mongo.host+':'+cfg.mongo.port+'/'+cfg.mongo.name);
+// open db connection
+var mongodb = mongoose.connect('mongodb://'+cfg.mongo.host+':'+cfg.mongo.port+'/'+cfg.mongo.name);
 
+// load models
 require.paths.unshift(__dirname+'/models');
 fs.readdir(__dirname+'/models', function(err, files) {
   if (err) {
-    throw new Error;
+    throw err;
   }
 
+  var extname = require('path').extname;
   files.forEach(function(file) {
     if (extname(file) == '.js') {
       require(file.replace('.js', ''));
@@ -49,6 +55,7 @@ function NotFound(msg) {
 
 sys.inherits(NotFound, Error);
 
+// Error 404
 app.error(function(err, req, res, next) {
   if (err instanceof NotFound) {
     res.send('404 Not found', 404);
@@ -57,6 +64,7 @@ app.error(function(err, req, res, next) {
   }
 });
 
+// Error 500
 app.error(function(err, req, res) {
   res.send('500 Internal server error', 500);
 });
@@ -139,4 +147,5 @@ app.del('/:collection/:id', function(req, res, next) {
   });
 });
 
+// start server
 app.listen(cfg.server.port /* , cfg.server.addr */);

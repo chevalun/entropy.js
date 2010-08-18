@@ -15,8 +15,13 @@ DEPENDENCIES
 INSTALLATION
 ------------
 
-Clone the Github repository or simply download the sources. You can run an
-entropy instance just by starting it with the `node` command:
+Clone the Github repository. Initialize and update the git submodules:
+
+    git submodule init --recursive
+    git submodule update --recursive
+
+
+You can run an entropy instance just by starting it with the `node` command:
 
     node entropy.js
 
