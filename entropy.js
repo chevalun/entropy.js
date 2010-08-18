@@ -41,7 +41,7 @@ fs.readdir(__dirname+'/models', function(err, files) {
   });
 });
 
-function NotFound(msg){
+function NotFound(msg) {
   this.name = 'NotFound';
   Error.call(this, msg);
   Error.captureStackTrace(this, arguments.callee);
@@ -63,7 +63,7 @@ app.error(function(err, req, res) {
 
 // HELLO
 app.get('/', function(req, res, next) {
-  res.send('', 200);
+  res.send('200 OK', 200);
 });
 
 // FIND
@@ -87,11 +87,11 @@ app.get('/:collection/:id', function(req, res, next) {
 
   col.findById(req.param('id'), function(doc) {
     if (!doc) {
-      return next(new NotFound);
+      next(new NotFound);
+    } else {
+      res.header('Content-Type', 'application/json');
+      res.send(doc.toObject(), 200);
     }
-
-    res.header('Content-Type', 'application/json');
-    res.send(doc.toObject(), 200);
   });
 });
 
@@ -113,14 +113,14 @@ app.post('/:collection/:id', function(req, res, next) {
 
   col.findById(req.param('id'), function(doc) {
     if (!doc) {
-      return next(new NotFound);
+      next(new NotFound);
+    } else {
+      doc.merge(req.param(req.param('collection')));
+
+      doc.save(function() {
+        res.send(doc.toObject(), 201);
+      });
     }
-
-    doc.merge(req.param(req.param('collection')));
-
-    doc.save(function() {
-      res.send(doc.toObject(), 201);
-    });
   });
 });
 
@@ -130,12 +130,12 @@ app.del('/:collection/:id', function(req, res, next) {
 
   col.findById(req.param('id'), function(doc) {
     if (!doc) {
-      return next(new NotFound);
+      next(new NotFound);
+    } else {
+      doc.remove(function() {
+        res.send(doc.toObject(), 200);
+      });
     }
-
-    doc.remove(function() {
-      res.send(doc.toObject(), 200);
-    });
   });
 });
 
