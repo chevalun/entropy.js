@@ -16,7 +16,7 @@ INSTALLATION
 ------------
 
 Clone the Github repository or simply download the sources. You can run an
-entropy instance just by starting it with Node:
+entropy instance just by starting it with the `node` command:
 
     node entropy.js
 
@@ -24,14 +24,15 @@ entropy instance just by starting it with Node:
 CONFIGURATION
 -------------
 
-Copy the `config.json.sample` file and modify it to fit your needs.
+Copy the `config.json.sample` file to `config.json` and modify it to fit your
+needs.
 
 
 USAGE
 -----
 
 You can put your Mongoose models in the `/models` directory. Here's an example
-of an simple User model:
+of an simple user model:
 
     // models/user.js
     var mongoose = require("mongoose").Mongoose;
