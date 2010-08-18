@@ -1,7 +1,6 @@
-﻿
-var fs  = require("fs"),
-    sys = require("sys"),
-    express = require("express"),
+﻿var fs  = require('fs'),
+    sys = require('sys'),
+    express = require('express'),
     extname = require('path').extname;
 
 var app = module.exports.app = express.createServer();
@@ -26,11 +25,11 @@ if (cfg.logger) {
   app.use(express.logger());
 }
 
-var mongoose = require("mongoose").Mongoose,
-    mongodb  = module.exports.db = mongoose.connect("mongodb://"+cfg.mongo.host+":"+cfg.mongo.port+"/"+cfg.mongo.name);
+var mongoose = require('mongoose').Mongoose,
+    mongodb  = module.exports.db = mongoose.connect('mongodb://'+cfg.mongo.host+':'+cfg.mongo.port+'/'+cfg.mongo.name);
 
-require.paths.unshift(__dirname+"/models");
-fs.readdir(__dirname+"/models", function(err, files) {
+require.paths.unshift(__dirname+'/models');
+fs.readdir(__dirname+'/models', function(err, files) {
   if (err) {
     throw new Error;
   }
@@ -55,24 +54,24 @@ sys.inherits(NotFound, Error);
 
 app.error(function(err, req, res, next) {
   if (err instanceof NotFound) {
-    res.send("404", 404);
+    res.send('404 Not found', 404);
   } else {
     next(err);
   }
 });
 
 app.error(function(err, req, res) {
-  res.send("500", 500);
+  res.send('500 Internal server error', 500);
 });
 
 // HELLO
-app.get("/", function(req, res, next) {
-  res.send("hello", 200);
+app.get('/', function(req, res, next) {
+  res.send('', 200);
 });
 
 // FIND
-app.get("/:collection", function(req, res, next) {
-  var model = app.set('mongodb').model(req.param("collection"));
+app.get('/:collection', function(req, res, next) {
+  var model = app.set('mongodb').model(req.param('collection'));
 
   model.find().all(function(docs) {
     var ret = [];
@@ -86,10 +85,10 @@ app.get("/:collection", function(req, res, next) {
 });
 
 // READ
-app.get("/:collection/:id", function(req, res, next) {
-  var model = app.set('mongodb').model(req.param("collection"));
+app.get('/:collection/:id', function(req, res, next) {
+  var model = app.set('mongodb').model(req.param('collection'));
 
-  model.findById(req.param("id"), function(doc) {
+  model.findById(req.param('id'), function(doc) {
     if (!doc) {
       return next(new NotFound);
     }
@@ -100,11 +99,11 @@ app.get("/:collection/:id", function(req, res, next) {
 });
 
 // CREATE
-app.post("/:collection", function(req, res, next) {
-  var model = app.set('mongodb').model(req.param("collection")),
+app.post('/:collection', function(req, res, next) {
+  var model = app.set('mongodb').model(req.param('collection')),
       doc   = new model;
 
-  doc.merge(req.param(req.param("collection")));
+  doc.merge(req.param(req.param('collection')));
 
   doc.save(function() {
     res.send(doc.toObject(), 201);
@@ -112,15 +111,15 @@ app.post("/:collection", function(req, res, next) {
 });
 
 // MODIFY
-app.post("/:collection/:id", function(req, res, next) {
-  var model = app.set('mongodb').model(req.param("collection"));
+app.post('/:collection/:id', function(req, res, next) {
+  var model = app.set('mongodb').model(req.param('collection'));
 
-  model.findById(req.param("id"), function(doc) {
+  model.findById(req.param('id'), function(doc) {
     if (!doc) {
       return next(new NotFound);
     }
 
-    doc.merge(req.param(req.param("collection")));
+    doc.merge(req.param(req.param('collection')));
 
     doc.save(function() {
       res.send(doc.toObject(), 201);
@@ -129,10 +128,10 @@ app.post("/:collection/:id", function(req, res, next) {
 });
 
 // REMOVE
-app.del("/:collection/:id", function(req, res, next) {
-  var model = app.set('mongodb').model(req.param("collection"));
+app.del('/:collection/:id', function(req, res, next) {
+  var model = app.set('mongodb').model(req.param('collection'));
 
-  model.findById(req.param("id"), function(doc) {
+  model.findById(req.param('id'), function(doc) {
     if (!doc) {
       return next(new NotFound);
     }
