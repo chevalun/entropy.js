@@ -14,10 +14,10 @@ DEPENDENCIES
 INSTALLATION
 ------------
 
-Clone the Github repository. Initialize and update the git submodules:
+Clone the Github repository. Update the vendor libraries:
 
-    git submodule init --recursive
-    git submodule update --recursive
+    $> git clone git://github.com/pminnieur/entropy.js.git
+    $> sh update_vendors.sh
 
 
 You can run an entropy instance just by starting it with the `node` command:
@@ -35,8 +35,9 @@ needs.
 USAGE
 -----
 
-You can put your Mongoose models in the `/models` directory. Here's an example
-of an simple user model:
+You can use entropy without any models, but I recommend to have a schema for
+each of your models. You can put your Mongoose models in the `/models`
+directory. Here's an example of an simple user model:
 
     // models/user.js
     var mongoose = require("mongoose").Mongoose;
@@ -52,13 +53,27 @@ of an simple user model:
 
 
 That's it. You can now find, read, create, modify and remove user objects via
-REST, just by calling the appropriate URLs:
+REST, just by calling the appropriate URLs. The routing schema is very simple:
 
-    GET localhost:3000/user // find
-    GET localhost:3000/user/1 // read
-    POST localhost:3000/user?user[username]=foo&user[email]=bar // create
-    POST localhost:3000/user/1?user[username]=foo&user[email]=bar // modify
-    DELETE localhost:3000/user/1 // remove
+    GET /:collection
+    find documents
+
+    GET /:collection/:id
+    read a document
+    
+    POST /:collection?collection[field1]=value1&collection[field2]=value2...
+    create a document
+    
+    POST /:collection/:id?collection[field1]=value1&collection[field2]=value2...
+    modify a document (collection[] parameter must match :collection)
+    
+    DELETE /:collection/:id
+    remove a document
+
+> **NOTE:** the `collection[]` array must be named like the model you want to
+> access, thus for creating or modifying a user you must use it like this:
+> `?user[username]=foo&user[email]=bar`
+
 
 CUSTOMIZATION
 -------------
