@@ -17,6 +17,8 @@ var app = module.exports.app = express.createServer();
 app.use(express.bodyDecoder());
 app.use(express.compiler({ enable: true }));
 app.use(express.conditionalGet());
+app.use(express.format());
+app.use(express.gzip());
 app.use(express.methodOverride());
 app.use(express.staticProvider(__dirname+'/public'));
 app.set('views', __dirname+'/views');
