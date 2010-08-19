@@ -55,20 +55,30 @@ directory. Here's an example of an simple user model:
 That's it. You can now find, read, create, modify and remove user objects via
 REST, just by calling the appropriate URLs. The routing schema is very simple:
 
+### Find
+
     GET /:collection
-    find documents
+
+
+### Read
 
     GET /:collection/:id
-    read a document
+
+
+### Create
     
     POST /:collection?collection[field1]=value1&collection[field2]=value2...
-    create a document
-    
+
+
+### Modify
+
     POST /:collection/:id?collection[field1]=value1&collection[field2]=value2...
-    modify a document (collection[] parameter must match :collection)
-    
+
+
+### Remove
+
     DELETE /:collection/:id
-    remove a document
+
 
 > **NOTE:** the `collection[]` array must be named like the model you want to
 > access, thus for creating or modifying a user you must use it like this:
