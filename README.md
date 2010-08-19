@@ -75,6 +75,25 @@ REST, just by calling the appropriate URLs. The routing schema is very simple:
 > `?user[username]=foo&user[email]=bar`
 
 
+### Finding documents
+
+You can specifiy what you want to find with the following parameters:
+
+#### Querying
+
+    GET /:collection?query[field1]=value1&query[field2]=value2&...
+
+
+#### Sorting
+
+    GET /:collection?sort[field1]=asc|desc&sort[field2]=asc|desc&...
+
+
+#### Pagination
+
+    GET /:collection?limit=5&offset=5
+
+
 CUSTOMIZATION
 -------------
 

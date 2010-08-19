@@ -14,6 +14,7 @@ var express = require('express'),
 var app = module.exports.app = express.createServer();
 
 // configure server
+app.use(express.bodyDecoder());
 app.use(express.compiler({ enable: true }));
 app.use(express.conditionalGet());
 app.use(express.methodOverride());
@@ -90,9 +91,30 @@ cfg.loader.controllers.forEach(loader);
 if (cfg.loader.use_default_controller) {
   // FIND
   app.get('/:collection', function(req, res, next) {
-    var col = db.model(req.param('collection'));
+    var col = db.model(req.params.collection),
+        qw = col.find();
 
-    col.find().all(function(docs) {
+    if (req.param('query')) {
+      qw.where(req.param('query'));
+    }
+
+    if (req.param('order')) {
+      var order = [];
+      req.param('order').forEach(function(dir, field) {
+        order.push([field, dir]);
+      });
+      qw.sort(order);
+    }
+
+    if (req.param('limit')) {
+      qw.limit(req.param('limit'));
+    }
+
+    if (req.param('offset')) {
+      qw.skip(req.param('offset'));
+    }
+
+    qw.all(function(docs) {
       var ret = [];
       docs.forEach(function(doc) {
         ret.push(doc.toObject());
@@ -105,9 +127,9 @@ if (cfg.loader.use_default_controller) {
 
   // READ
   app.get('/:collection/:id', function(req, res, next) {
-    var col = db.model(req.param('collection'));
+    var col = db.model(req.params.collection);
 
-    col.findById(req.param('id'), function(doc) {
+    col.findById(req.params.id, function(doc) {
       if (!doc) {
         next(new NotFound);
       } else {
@@ -119,10 +141,10 @@ if (cfg.loader.use_default_controller) {
 
   // CREATE
   app.post('/:collection', function(req, res, next) {
-    var col = db.model(req.param('collection')),
+    var col = db.model(req.params.collection),
         doc = new col;
 
-    doc.merge(req.param(req.param('collection')));
+    doc.merge(req.param(req.params.collection));
 
     doc.save(function() {
       res.send(doc.toObject(), 201);
@@ -131,13 +153,13 @@ if (cfg.loader.use_default_controller) {
 
   // MODIFY
   app.post('/:collection/:id', function(req, res, next) {
-    var col = db.model(req.param('collection'));
+    var col = db.model(req.params.collection);
 
-    col.findById(req.param('id'), function(doc) {
+    col.findById(req.params.id, function(doc) {
       if (!doc) {
         next(new NotFound);
       } else {
-        doc.merge(req.param(req.param('collection')));
+        doc.merge(req.param(req.params.collection));
 
         doc.save(function() {
           res.send(doc.toObject(), 200);
@@ -148,9 +170,9 @@ if (cfg.loader.use_default_controller) {
 
   // REMOVE
   app.del('/:collection/:id', function(req, res, next) {
-    var col = db.model(req.param('collection'));
+    var col = db.model(req.params.collection);
 
-    col.findById(req.param('id'), function(doc) {
+    col.findById(req.params.id, function(doc) {
       if (!doc) {
         next(new NotFound);
       } else {
