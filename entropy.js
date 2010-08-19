@@ -140,7 +140,7 @@ if (cfg.loader.use_default_controller) {
   });
 
   // CREATE
-  app.post('/:collection', function(req, res, next) {
+  var createDoc = function(req, res, next) {
     var col = db.model(req.params.collection),
         doc = new col;
 
@@ -149,10 +149,13 @@ if (cfg.loader.use_default_controller) {
     doc.save(function() {
       res.send(doc.toObject(), 201);
     });
-  });
+  };
+
+  app.put('/:collection', createDoc);
+  app.post('/:collection', createDoc);
 
   // MODIFY
-  app.post('/:collection/:id', function(req, res, next) {
+  var modifyDoc = function(req, res, next) {
     var col = db.model(req.params.collection);
 
     col.findById(req.params.id, function(doc) {
@@ -166,7 +169,10 @@ if (cfg.loader.use_default_controller) {
         });
       }
     });
-  });
+  };
+
+  app.put('/:collection/:id', modifyDoc);
+  app.post('/:collection/:id', modifyDoc);
 
   // REMOVE
   app.del('/:collection/:id', function(req, res, next) {
