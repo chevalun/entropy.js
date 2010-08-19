@@ -96,7 +96,7 @@ You can specifiy what you want to find with the following parameters:
 
 #### Sorting
 
-    GET /:collection?sort[field1]=asc|desc&sort[field2]=asc|desc&...
+    GET /:collection?order[field1]=asc|desc&order[field2]=asc|desc&...
 
 
 #### Pagination
